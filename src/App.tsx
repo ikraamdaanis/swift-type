@@ -1,6 +1,6 @@
 import { generate } from "random-words";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { cn } from "./utils/cn";
+import { cn } from "utils/cn";
 
 type Word = {
   word: string;
@@ -79,9 +79,20 @@ export const App = () => {
   const { words, currentIndex, typedWord, handleChange, inputRef } =
     useWordTyping(5);
 
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setValue(prev => prev + 1), 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <main className="flex h-screen w-full items-center justify-center">
       <section className="mx-auto flex max-w-screen-lg flex-col items-center justify-center gap-8">
+        <p className="text-2xl font-semibold">{value}</p>
         <div className="flex items-center gap-4">
           {words.map(word => (
             <span
