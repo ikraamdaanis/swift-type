@@ -1,5 +1,6 @@
 import { generate } from "random-words";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useTimer } from "react-timer-hook";
 import { cn } from "utils/cn";
 
 type Word = {
@@ -22,10 +23,30 @@ const useWordTyping = (wordCount: number) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [typedWord, setTypedWord] = useState("");
 
+  const time = new Date();
+  time.setSeconds(time.getSeconds() + 60);
+
+  const {
+    totalSeconds,
+    pause
+    // seconds,
+    // minutes,
+    // hours,
+    // days,
+    // isRunning,
+    // start,
+    // resume,
+    // restart
+  } = useTimer({
+    expiryTimestamp: time,
+    onExpire: () => console.warn("onExpire called")
+  });
+
   useEffect(() => {
     setWords(generateWords(wordCount));
   }, [wordCount]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -41,6 +62,7 @@ const useWordTyping = (wordCount: number) => {
 
         if (newIndex === words.length) {
           inputRef.current?.blur();
+          pause();
         }
 
         return newIndex;
@@ -72,28 +94,36 @@ const useWordTyping = (wordCount: number) => {
     inputRef.current?.focus();
   }, []);
 
-  return { words, currentIndex, typedWord, handleChange, inputRef };
+  return {
+    words,
+    currentIndex,
+    typedWord,
+    handleChange,
+    inputRef,
+    timer: totalSeconds,
+    containerRef
+  };
 };
 
 export const App = () => {
-  const { words, currentIndex, typedWord, handleChange, inputRef } =
-    useWordTyping(5);
-
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => setValue(prev => prev + 1), 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
+  const {
+    words,
+    currentIndex,
+    typedWord,
+    handleChange,
+    inputRef,
+    timer,
+    containerRef
+  } = useWordTyping(5);
 
   return (
     <main className="flex h-screen w-full items-center justify-center">
       <section className="mx-auto flex max-w-screen-lg flex-col items-center justify-center gap-8">
-        <p className="text-2xl font-semibold">{value}</p>
-        <div className="flex items-center gap-4">
+        <p className="text-2xl font-semibold">{timer}</p>
+        <div
+          className="flex items-center gap-4 overflow-y-auto border border-zinc-300 px-4 py-8"
+          ref={containerRef}
+        >
           {words.map(word => (
             <span
               key={word.index}
